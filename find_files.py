@@ -3,8 +3,13 @@ import os
 
 def find_files_in_dir(
     dir_path: str = ".",
-    file_extensions: tuple = (".tsx", ".jsx"),
-    ignored_directories=("node_modules", "__tests__", "dist", "build"),
+    file_extensions: tuple[str, ...] = (".tsx", ".jsx"),
+    ignored_directories: tuple[str, ...] = (
+        "node_modules",
+        "__tests__",
+        "dist",
+        "build",
+    ),
 ):
     """Return a list of source files of a certain extensions(s) under a certain dir_path."""
 
@@ -36,14 +41,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "-e",
         "--extensions",
-        nargs="?",
+        nargs="+",
         default=[".tsx", ".jsx"],
         help="File extensions to include (e.g. .tsx .jsx)",
     )
     parser.add_argument(
         "-ignored",
         "--ignored_directories",
-        nargs="?",
+        nargs="+",
         default=["node_modules", "__tests__", "dist", "build"],
         help="Directories to ignore (e.g. .git node_modules)",
     )
