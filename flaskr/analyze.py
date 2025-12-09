@@ -73,7 +73,7 @@ if __name__ == "__main__":
     exts = tuple(args.extensions)
     ignored_dirs = tuple(args.ignored_directories)
 
-    from flaskr.find_files import find_files_in_dir
+    from find_files import find_files_in_dir
 
     found_files = find_files_in_dir(
         args.path, file_extensions=exts, ignored_directories=ignored_dirs
@@ -81,7 +81,11 @@ if __name__ == "__main__":
 
     found_files = dict(enumerate(found_files, 1))
     length = len(found_files)
-    print(f"Found {length} JS files")
+    print(f"Found {length} JS files in path {args.path}")
+    if length == 0:
+        print(f"No JS files found in path {args.path}")
+        exit()
+    print(f"Found {length} JS files in path {args.path}")
     for key, value in found_files.items():
         print(f"{key}: {value}")
 
