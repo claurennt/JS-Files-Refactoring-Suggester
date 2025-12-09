@@ -52,6 +52,7 @@ if __name__ == "__main__":
         default=["node_modules", "__tests__", "dist", "build"],
         help="Directories to ignore (e.g. .git node_modules)",
     )
+
     args = parser.parse_args()
     exts = tuple(args.extensions)
     ignored_dirs = tuple(args.ignored_directories)
