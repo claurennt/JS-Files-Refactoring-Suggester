@@ -60,6 +60,6 @@ if __name__ == "__main__":
         args.path, file_extensions=exts, ignored_directories=ignored_dirs
     )
 
-    print(f"Found {len(found)} react files in {os.path.abspath(args.path)}")
+    print(f"Found {len(found)} JS files in {os.path.abspath(args.path)}")
     for p in found:
         print(p)
