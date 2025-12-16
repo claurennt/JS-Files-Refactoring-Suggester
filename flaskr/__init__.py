@@ -1,69 +1,118 @@
-import os
-import tempfile
+from flask import (
+    Flask,
+    Response,
+    flash,
+    redirect,
+    render_template,
+    request,
+    stream_with_context,
+)
 
-from flask import Flask, flash, redirect, render_template, request, url_for
+import re, os, json
+
+from tempfile import TemporaryDirectory
 from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage
 
-
-ALLOWED_EXTENSIONS = {"tsx", "jsx", "ts", "js"}
-
-
-def allowed_file(filename):
-    return filename in ALLOWED_EXTENSIONS
-
-
-app = Flask(__name__)
-# app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config.from_mapping(
-    SECRET_KEY="dev",
+_ALLOWED_EXTENSIONS_RE = re.compile(
+    r"\.(ts|js|tsx|jsx)$",
+    re.IGNORECASE,
 )
 
 
-@app.route("/")
+def js_escape(s: str) -> str:
+
+    # Safely embed HTML into JS string
+    return json.dumps(s)
+
+
+def process_uploaded_file(file: FileStorage):
+    with TemporaryDirectory() as temp_dir:
+        secured_filename = secure_filename(file.filename)
+        path = os.path.join(temp_dir, secured_filename)
+        file.save(path)
+
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+
+
+def allowed_file(
+    filename: str, extensions: tuple[str, ...] = _ALLOWED_EXTENSIONS_RE
+) -> bool:
+    """Check if file has an allowed extension using a cached regex."""
+    return bool(extensions.search(filename))
+
+
+app = Flask(__name__)
+app.config.from_mapping(SECRET_KEY="dev")
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
+
+
+@app.route("/", methods=["GET"])
 def home():
     return render_template("file_upload.html")
 
 
 @app.route("/", methods=["POST"])
-def upload_file():
+def upload_and_analyze():
+    file = request.files.get("file")
+    user_input = request.form.get("user-input")
 
-    if "file" not in request.files:
-        flash("No file part")
-        app.logger.error("File upload error")
-        return redirect(request.url)
+    if not file and not user_input:
+        flash("No data, please upload a file or paste your code")
+        return redirect("/")
 
-    file = request.files["file"]
-    # If the user does not select a file, the browser submits an
-    # empty file without a filename.
-    if file.filename == "":
-        flash("No selected file")
-        return redirect(request.url)
-    _, file_extension = os.path.splitext(file.filename)
-    # If the user uploads an invalid file type
-    if file and allowed_file(file_extension):
-        flash("File type not allowed, please only upload a valid JS file")
-        return redirect(request.url)
+    if file and not allowed_file(file.filename):
+        flash("File type not allowed. Please upload .ts, .js, .tsx, or .jsx files.")
+        return redirect("/")
 
-    filename = secure_filename(file.filename)
-    app.logger.info("%s logged in successfully", file)
+    # Read file safely
+    try:
+        content = user_input or process_uploaded_file(file)
+    except Exception as e:
+        return render_template("analysis.html", error=str(e))
 
-    # Create a temporary file
-    temp_dir = tempfile.mkdtemp()
-    filename = secure_filename(file.filename)
-    temp_path = os.path.join(temp_dir, filename)
-    # Save the file
-    file.save(temp_path)
+    @stream_with_context
+    def generate():
+        from markdown_it import MarkdownIt
+        from bs4 import BeautifulSoup
 
-    content = ""
+        yield render_template("analysis.html", initial_html="")
 
-    # Process the file
-    with open(temp_path, "r") as f:
-        content = f.read()
+        # Try importing analyze()
+        try:
+            from analyze import analyze
+        except ImportError:
+            try:
+                from .analyze import analyze
+            except ImportError:
+                yield '<div class="error">Analysis module not found</div>'
+                return
 
-    # Clean up: remove temp file when done
-    os.remove(temp_path)
-    os.rmdir(temp_dir)
-    from .analyze import analyze
+        markdown = MarkdownIt("gfm-like")
+        full_markdown = ""
 
-    analysis = analyze(content)
-    return render_template("analysis.html", analysis=analysis)
+        # Run analysis
+        try:
+            for chunk in analyze(content):
+                full_markdown += chunk
+            parsed = markdown.render(full_markdown)
+            soup = BeautifulSoup(parsed, "html.parser")
+            for pre in soup.find_all("pre"):
+                pre.attrs.pop("tabindex", None)
+            html = str(soup)
+
+            yield html
+
+            # Completion message
+            yield "<div class='success'><strong>✅ Analysis complete!</strong></div>"
+
+        except Exception as e:
+            yield f'<div class="error">Error during analysis: {str(e)}</div>'
+            return
+
+    return Response(generate(), mimetype="text/html")
+
+
+if __name__ == "__main__":
+    app.run(debug=True, threaded=True)
