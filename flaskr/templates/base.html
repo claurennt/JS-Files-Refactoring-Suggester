@@ -6,6 +6,7 @@
       rel="stylesheet"
       href="{{ url_for('static',filename='styles/base.css') }}"
     />
+    {% block styles %}{% endblock %}
     <title>AI refactorer</title>
     {% endblock %}
   </head>
@@ -29,7 +30,7 @@
   </body>
   <script>
     document.addEventListener('DOMContentLoaded', () =>
-      document.getElementById(' error-message').focus()
+      document.getElementById('error-message').focus()
     );
   </script>
 </html>
