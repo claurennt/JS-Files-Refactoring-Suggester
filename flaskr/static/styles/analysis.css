@@ -1,0 +1,43 @@
+.container {
+  display: flex;
+  gap: 30px;
+}
+
+#analysis-content {
+  line-height: 1.6;
+}
+
+pre {
+  background: #f6f8fa;
+  padding: 16px;
+  border-radius: 6px;
+  overflow: auto;
+  border: 1px solid #e1e4e8;
+}
+
+code {
+  font-family: 'SFMono-Regular', Consolas, monospace;
+}
+
+.loading {
+  color: #666;
+  font-style: italic;
+  text-align: center;
+  padding: 40px;
+}
+
+.error {
+  color: #d32f2f;
+  background: #ffebee;
+  padding: 15px;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.success {
+  color: #388e3c;
+  background: #e8f5e9;
+  padding: 15px;
+  border-radius: 4px;
+  margin: 10px 0;
+}

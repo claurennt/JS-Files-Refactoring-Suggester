@@ -1,3 +1,11 @@
-{% extends "base.html" %} {% block content %}
-<p>{{analysis}}</p>
+{% block styles %}
+<link
+  type="text/css"
+  rel="stylesheet"
+  href="{{ url_for('static', filename = '/styles/analysis.css') }}"
+/>
+{% endblock %} {% extends "base.html" %} {%block content %}
+<h2>Analysis Results</h2>
+
+<div id="analysis-content">{{ initial_html |safe |error}}</div>
 {% endblock %}
