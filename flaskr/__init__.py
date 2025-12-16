@@ -100,25 +100,10 @@ def upload_and_analyze():
                 pre.attrs.pop("tabindex", None)
             html = str(soup)
 
-            yield f"""
-                <script>
-                  document
-                    .getElementById("analysis-content")
-                    .insertAdjacentHTML("beforeend", {js_escape(html)});
-                </script>
-                """
+            yield html
 
             # Completion message
-            yield """
-            <script>
-              document
-                .getElementById("analysis-content")
-                .insertAdjacentHTML(
-                  "beforeend",
-                  "<div class='success'><strong>✅ Analysis complete!</strong></div>"
-                );
-            </script>
-            """
+            yield "<div class='success'><strong>✅ Analysis complete!</strong></div>"
 
         except Exception as e:
             yield f'<div class="error">Error during analysis: {str(e)}</div>'
