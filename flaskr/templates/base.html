@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     {% block head %}
-    <!-- <link rel="stylesheet" href="style.css" /> -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static',filename='styles/base.css') }}"
+    />
     <title>AI refactorer</title>
     {% endblock %}
   </head>
@@ -13,7 +16,20 @@
         This simple Python project will suggest improvements to your code using
         AI. Start by uploading a file.
       </h2>
+      <div id="ssr-validation">
+        {% with messages = get_flashed_messages() %} {% if messages %} {% for
+        message in messages %}
+        <p id="error-message" tabindex="-1">
+          <span role="img" alt="Error">❌</span><span>{{ message }}</span>
+        </p>
+        {% endfor %} {% endif %} {% endwith %}
+      </div>
       <div id="content">{% block content %}{% endblock %}</div>
     </main>
   </body>
+  <script>
+    document.addEventListener('DOMContentLoaded', () =>
+      document.getElementById(' error-message').focus()
+    );
+  </script>
 </html>
